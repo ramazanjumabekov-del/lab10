@@ -17,29 +17,34 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: group-chat
     steps:
       - uses: actions/checkout@v4
+
+      - name: Find project folder
+        id: project
+        run: |
+          file=$(find . -name package.json -not -path '*/node_modules/*' | head -n 1)
+          echo "dir=$(dirname "$file")" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: group-chat/package-lock.json
 
       - run: npm ci
+        working-directory: ${{ steps.project.outputs.dir }}
+
       - run: npx tsc --noEmit
+        working-directory: ${{ steps.project.outputs.dir }}
 
       - run: npm run build:pages
+        working-directory: ${{ steps.project.outputs.dir }}
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: group-chat/dist-pages
+          path: ${{ steps.project.outputs.dir }}/dist-pages
 
   deploy:
     needs: build
