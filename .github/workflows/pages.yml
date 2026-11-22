@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: group-chat
     steps:
       - uses: actions/checkout@v4
 
@@ -24,9 +27,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: group-chat/package-lock.json
 
       - run: npm ci
-      - run: npm run typecheck
+      - run: npx tsc --noEmit
 
       - run: npm run build:pages
         env:
@@ -35,7 +39,7 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist-pages
+          path: group-chat/dist-pages
 
   deploy:
     needs: build
